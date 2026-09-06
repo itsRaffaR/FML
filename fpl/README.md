@@ -35,3 +35,11 @@ missing entirely (the pool requires 450+ minutes last season).
 
 `--force` requires named players in the squad, so you can price the cost of a
 pick the model would not make on its own.
+
+## Injuries
+
+The snapshot's `status` / `news` fields are only as fresh as the mirror, which
+currently stops after GW1 — three gameweeks and a transfer deadline day behind.
+`exclusions.txt` records the hand-checked absences and wrong-club entries that
+must be passed to `--exclude`; re-verify it against team news before every
+deadline.

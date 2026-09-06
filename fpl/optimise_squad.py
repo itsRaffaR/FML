@@ -33,7 +33,7 @@ def fixture_ease(fixtures, start, end):
     return {t: (sum(d) / len(d), 1 + (3 - sum(d) / len(d)) * 0.12) for t, d in diff.items()}
 
 
-def build_players(cur, prev, ease, teams, horizon, exclude, min_minutes_now=60):
+def build_players(cur, prev, ease, teams, horizon, exclude, min_minutes_now=60, whitelist=()):
     prior = {r['code']: r for r in prev}
     out = []
     for r in cur:
@@ -43,7 +43,10 @@ def build_players(cur, prev, ease, teams, horizon, exclude, min_minutes_now=60):
         # Last season's minutes were earned at whatever club the player was at
         # then, so they say nothing about whether he starts NOW. Require
         # evidence of minutes at the current club before trusting the rate.
-        if int(r['minutes']) < min_minutes_now:
+        # The minutes screen is a blunt one: it also hides anyone injured or
+        # rested that gameweek. A player confirmed in a recent team sheet is
+        # known to be starting now, which beats the stale minutes count.
+        if int(r['minutes']) < min_minutes_now and r['web_name'] not in whitelist:
             continue
 
         p = prior.get(r['code'])
@@ -117,6 +120,7 @@ def main():
     ap.add_argument('--exclude', default='')
     ap.add_argument('--force', default='', help='comma-separated web_names to require in the squad')
     ap.add_argument('--data', default='.')
+    ap.add_argument('--whitelist', default='', help='players confirmed starting despite low minutes')
     ap.add_argument('--min-minutes-now', type=int, default=60,
                     help='minutes required in the current season to count as a starter')
     args = ap.parse_args()
@@ -133,7 +137,8 @@ def main():
 
     players = build_players(load(f'{d}/players_raw_2026-27.csv'),
                             load(f'{d}/players_raw_2025-26.csv'),
-                            ease, teams, horizon, exclude, args.min_minutes_now)
+                            ease, teams, horizon, exclude, args.min_minutes_now,
+                            {x.strip() for x in args.whitelist.split(',') if x.strip()})
     force = [x.strip() for x in args.force.split(',') if x.strip()]
     status, picked, captain = solve(players, args.budget, force=force, clashes=clashes)
 

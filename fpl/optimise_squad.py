@@ -57,7 +57,7 @@ def build_players(cur, prev, ease, teams, horizon, exclude):
     return out
 
 
-def solve(players, budget, bench_weight=0.15, force=()):
+def solve(players, budget, bench_weight=0.15, force=(), clashes=()):
     prob = pulp.LpProblem('fpl', pulp.LpMaximize)
     idx = range(len(players))
     sq = pulp.LpVariable.dicts('squad', idx, cat='Binary')
@@ -80,6 +80,15 @@ def solve(players, budget, bench_weight=0.15, force=()):
         prob += pulp.lpSum(xi[i] for i in idx if players[i]['pos'] == pos) <= XI_MAX[pos]
     for club in {p['club'] for p in players}:
         prob += pulp.lpSum(sq[i] for i in idx if players[i]['club'] == club) <= 3
+
+    # a clean sheet cannot happen at both ends of the same match, so never hold
+    # keepers or defenders on both sides of one fixture
+    for n, (home, away) in enumerate(clashes):
+        side = pulp.LpVariable(f'side_{n}', cat='Binary')
+        back = lambda club: [i for i in idx
+                             if players[i]['club'] == club and players[i]['pos'] in ('GK', 'DEF')]
+        prob += pulp.lpSum(sq[i] for i in back(home)) <= 5 * side
+        prob += pulp.lpSum(sq[i] for i in back(away)) <= 5 * (1 - side)
 
     for name in force:
         want = [i for i in idx if players[i]['name'] == name]
@@ -110,11 +119,15 @@ def main():
     exclude = {x.strip() for x in args.exclude.split(',') if x.strip()}
     horizon = args.to_gw - args.from_gw + 1
 
+    fx = load(f'{d}/fixtures.csv')
+    clashes = [(teams[f['team_h']], teams[f['team_a']]) for f in fx
+               if f['event'].strip() and int(f['event']) == args.from_gw]
+
     players = build_players(load(f'{d}/players_raw_2026-27.csv'),
                             load(f'{d}/players_raw_2025-26.csv'),
                             ease, teams, horizon, exclude)
     force = [x.strip() for x in args.force.split(',') if x.strip()]
-    status, picked, captain = solve(players, args.budget, force=force)
+    status, picked, captain = solve(players, args.budget, force=force, clashes=clashes)
 
     print(f"solver: {status}   pool: {len(players)}   horizon: GW{args.from_gw}-{args.to_gw}")
     order = {'GK': 0, 'DEF': 1, 'MID': 2, 'FWD': 3}

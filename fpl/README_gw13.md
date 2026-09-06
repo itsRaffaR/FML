@@ -28,6 +28,13 @@ Expected points per 90 from underlying numbers:
     - xGC/90 / 2                            for keepers and defenders
     + saves/90 / 3                          keepers
     + min(DefCon90 / threshold, 1)^2 x 2    threshold 10 for DEF, 12 for MID
+    + bonus/90
+
+Bonus is included because the BPS system rewards the same actions the rest of
+the model already counts, so the players who earn bonus keep earning it.
+Leaving it out quietly penalises high-BPS attackers: it was docking Haaland two
+points per 90 against cheap defenders who earn almost none, and it alone
+accounted for most of the apparent case against owning him.
 
 Blended with realised points per 90 (default 0.85 / 0.15). Three gameweeks of
 points are far too noisy to use alone, but realised points capture bonus

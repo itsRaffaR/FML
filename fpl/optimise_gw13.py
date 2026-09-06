@@ -96,6 +96,12 @@ def expected_points_per_90(a):
 
     need = DEFCON_NEED.get(pos, 99)              # defensive-contribution bonus
     xp += min(per90(a['defcon']) / need, 1.0) ** 2 * 2
+
+    # Bonus points are a real and repeatable part of a return: the BPS system
+    # rewards goals, assists, saves and defensive actions, so the players who
+    # earn bonus keep earning it. Leaving it out quietly penalises high-BPS
+    # attackers -- it cost Haaland two points per 90 against cheaper defenders.
+    xp += per90(a['bonus'])
     return xp
 
 

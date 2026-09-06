@@ -24,9 +24,18 @@ re-indexed each season and are NOT comparable between files.
 
 where the multiplier is `1 + (3 - mean difficulty) * 0.12` over the horizon.
 
+Last season's minutes were earned at whatever club the player was at then, so
+on their own they say nothing about whether he starts now. The pool therefore
+also requires `--min-minutes-now` minutes in the CURRENT season (default 60):
+without it the solver happily picks a backup keeper who has not played a league
+minute for his new club.
+
 Known limits: the prior is last season only, so players whose minutes were
 injury-hit are under-rated, and anyone who arrived in the league this summer is
-missing entirely (the pool requires 450+ minutes last season).
+missing entirely (the pool requires 450+ minutes last season). The current-season
+minutes check is only as deep as the mirror goes — one gameweek — so it neither
+catches a player dropped later in the season nor spares one who was rested in
+GW1. Check the XI against the latest confirmed team sheets before submitting.
 
 ## Usage
 

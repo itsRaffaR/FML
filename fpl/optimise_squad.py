@@ -33,13 +33,19 @@ def fixture_ease(fixtures, start, end):
     return {t: (sum(d) / len(d), 1 + (3 - sum(d) / len(d)) * 0.12) for t, d in diff.items()}
 
 
-def build_players(cur, prev, ease, teams, horizon, exclude):
+def build_players(cur, prev, ease, teams, horizon, exclude, min_minutes_now=60):
     prior = {r['code']: r for r in prev}
     out = []
     for r in cur:
         pos, club = POS[r['element_type']], teams[r['team']]
         if r['web_name'] in exclude or r['status'] != 'a':
             continue
+        # Last season's minutes were earned at whatever club the player was at
+        # then, so they say nothing about whether he starts NOW. Require
+        # evidence of minutes at the current club before trusting the rate.
+        if int(r['minutes']) < min_minutes_now:
+            continue
+
         p = prior.get(r['code'])
         mins25 = int(p['minutes']) if p else 0
         pts25 = int(p['total_points']) if p else 0
@@ -111,6 +117,8 @@ def main():
     ap.add_argument('--exclude', default='')
     ap.add_argument('--force', default='', help='comma-separated web_names to require in the squad')
     ap.add_argument('--data', default='.')
+    ap.add_argument('--min-minutes-now', type=int, default=60,
+                    help='minutes required in the current season to count as a starter')
     args = ap.parse_args()
 
     d = args.data.rstrip('/')
@@ -125,7 +133,7 @@ def main():
 
     players = build_players(load(f'{d}/players_raw_2026-27.csv'),
                             load(f'{d}/players_raw_2025-26.csv'),
-                            ease, teams, horizon, exclude)
+                            ease, teams, horizon, exclude, args.min_minutes_now)
     force = [x.strip() for x in args.force.split(',') if x.strip()]
     status, picked, captain = solve(players, args.budget, force=force, clashes=clashes)
 

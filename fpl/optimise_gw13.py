@@ -129,7 +129,7 @@ def fixture_ease(fixtures, teams, start, end):
     return {t: (sum(v) / len(v), 1 + (3 - sum(v) / len(v)) * 0.12) for t, v in d.items()}
 
 
-def solve(P, budget, clashes, force, bench_weight=0.15):
+def solve(P, budget, clashes, force, bench_weight=0.15, no_opposition=False):
     prob = pulp.LpProblem('fpl', pulp.LpMaximize)
     idx = range(len(P))
     sq = pulp.LpVariable.dicts('s', idx, cat='Binary')
@@ -158,6 +158,18 @@ def solve(P, budget, clashes, force, bench_weight=0.15):
         bk = lambda c: [i for i in idx if P[i]['club'] == c and P[i]['pos'] in ('GK', 'DEF')]
         prob += pulp.lpSum(sq[i] for i in bk(h)) <= 5 * side
         prob += pulp.lpSum(sq[i] for i in bk(a)) <= 5 * (1 - side)
+    if no_opposition:
+        # Holding a defence against your own attack is self-cancelling: a clean
+        # sheet for one end is a blank for the other. Forbid keeping defensive
+        # assets from one club while holding attackers from its opponent.
+        for k, (h, a) in enumerate(clashes):
+            back = lambda c: [i for i in idx if P[i]['club'] == c and P[i]['pos'] in ('GK', 'DEF')]
+            fwd = lambda c: [i for i in idx if P[i]['club'] == c and P[i]['pos'] in ('MID', 'FWD')]
+            for d, o in ((h, a), (a, h)):
+                u = pulp.LpVariable(f'o{k}_{d}', cat='Binary')
+                prob += pulp.lpSum(sq[i] for i in back(d)) <= 5 * u
+                prob += pulp.lpSum(sq[i] for i in fwd(o)) <= 10 * (1 - u)
+
     for name in force:
         want = [i for i in idx if P[i]['name'] == name]
         if not want:
@@ -178,6 +190,8 @@ def main():
     ap.add_argument('--force', default='')
     ap.add_argument('--min-last-mins', type=float, default=45,
                     help='minutes in the most recent gameweek to count as playing')
+    ap.add_argument('--no-opposition', action='store_true',
+                    help='never hold a club\'s defence against its opponent\'s attack')
     ap.add_argument('--blend', type=float, default=0.65,
                     help='weight on the underlying model vs realised points')
     ap.add_argument('--ins', default='ins')
@@ -203,7 +217,8 @@ def main():
               {x.strip() for x in args.exclude.split(',') if x.strip()},
               args.min_last_mins, args.blend)
     status, picked, captain = solve(P, args.budget, clashes,
-                                    [x.strip() for x in args.force.split(',') if x.strip()])
+                                    [x.strip() for x in args.force.split(',') if x.strip()],
+                                    no_opposition=args.no_opposition)
 
     print(f"solver: {status}   pool: {len(P)}   scoring: GW1-3 underlying "
           f"(blend {args.blend:.2f} xP / {1-args.blend:.2f} actual)")

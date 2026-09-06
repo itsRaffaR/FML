@@ -1,0 +1,33 @@
+# Players excluded from the pool as of 6 Sep 2026 (pre-GW4).
+# The data snapshot predates the 1 Sep deadline day and three gameweeks of
+# team news, so these must be applied by hand via --exclude.
+
+# injured / suspended / unavailable
+Gabriel        ARS  hamstring, no return date (missed GW3 v Chelsea)
+Saliba         ARS  back, extended absence
+J.Timber       ARS  groin
+Doku           MCI  calf
+Ekitiké        LIV  achilles
+Kulusevski     TOT  knee
+Xavi           TOT  ACL, out until at least end of 2026
+Kudus          TOT  thigh
+Maddison       TOT  shoulder (back in training)
+Mitoma         BHA  hamstring
+Minteh         BHA  leg, expected back 28 Nov
+Sarr           CRY  groin
+Osula          NEW  foot
+Manzambi       AVL  knee
+Cairney        FUL  knee
+Fofana         CHE  suspended
+Emegha         CHE  hamstring
+Henderson      CHE  wrist
+Amad           MUN  unspecified
+Abraham        AVL  knock
+
+# left the club / listed at the wrong club in the snapshot
+Beto           left Everton
+Enzo           Chelsea -> Man City (deadline day)
+Ndiaye         Everton -> Man City (deadline day)
+Grealish       Man City -> Everton (loan)
+Reijnders      joined Al Qadsiah
+Rodrigo        joined Barcelona
